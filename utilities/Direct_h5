@@ -1,0 +1,220 @@
+import os
+import h5py
+import torch
+import json
+import re
+from typing import List, Tuple, Dict
+
+def parse_filename(filename: str) -> Tuple[str, int]:
+    """
+    Parse filename to extract design point and velocity
+    Expected format: velocity_DP0_5.txt where 5 is velocity, DP0 is design point
+    """
+    # Remove .txt extension
+    base_name = filename.replace('.txt', '')
+
+    # Extract design point (DP0, DP1, etc.)
+    dp_match = re.search(r'DP\d+', base_name)
+    design_point = dp_match.group(0) if dp_match else 'DP0'
+
+    # Extract velocity (number after last underscore)
+    velocity_match = re.search(r'_(\d+)$', base_name)
+    velocity = int(velocity_match.group(1)) if velocity_match else 0
+
+    return design_point, velocity
+
+def read_velocity_txt_file(txt_file_path: str) -> Tuple[List[int], List[List[float]], List[List[float]]]:
+    """
+    Read txt file containing node coordinates and velocities
+    Expected columns: nodenumber, x-coordinate, y-coordinate, z-coordinate, velocity-magnitude, x-velocity, y-velocity, z-velocity
+    """
+    nodes = []
+    coordinates = []
+    velocities = []
+
+    print(f"  Reading file: {txt_file_path}")
+
+    try:
+        with open(txt_file_path, 'r') as file:
+            lines = file.readlines()
+
+            for line_num, line in enumerate(lines, 1):
+                # Skip header lines or empty lines
+                line = line.strip()
+                if not line or line.startswith('#') or 'nodenumber' in line.lower():
+                    continue
+
+                # Split the line into parts (handle comma-separated values)
+                parts = line.split(',')
+                # Strip whitespace from each part
+                parts = [part.strip() for part in parts]
+                
+                if len(parts) >= 8:  # Ensure we have all required columns
+                    try:
+                        # Parse each field
+                        node_id = int(float(parts[0]))
+                        x_coord = float(parts[1])
+                        y_coord = float(parts[2])
+                        z_coord = float(parts[3])
+                        vel_magnitude = float(parts[4])  # Not used but parsed for completeness
+                        x_velocity = float(parts[5])
+                        y_velocity = float(parts[6])
+                        z_velocity = float(parts[7])
+
+                        nodes.append(node_id)
+                        coordinates.append([x_coord, y_coord, z_coord])
+                        velocities.append([x_velocity, y_velocity, z_velocity])
+                    except ValueError as e:
+                        print(f"    Warning: Could not parse line {line_num}: {line} - Error: {e}")
+                        continue
+                elif len(parts) > 0:
+                    print(f"    Warning: Line {line_num} has {len(parts)} columns, expected 8")
+    except Exception as e:
+        print(f"  Error reading file {txt_file_path}: {e}")
+        return [], [], []
+
+    print(f"  Successfully read {len(nodes)} nodes")
+    return nodes, coordinates, velocities
+
+def save_velocity_data_to_h5(folder_path: str, output_folder_path: str):
+    """
+    Main function to process txt files and save to H5 format
+    """
+    device = torch.device('cpu')
+
+    # Create output folder if it doesn't exist
+    os.makedirs(output_folder_path, exist_ok=True)
+
+    if not os.path.exists(folder_path):
+        print(f"Error: Folder path does not exist: {folder_path}")
+        return
+
+    # Get all txt files in the folder
+    txt_files = [f for f in os.listdir(folder_path) if f.endswith('.txt')]
+
+    if not txt_files:
+        print(f"No txt files found in {folder_path}")
+        return
+
+    print(f"Found {len(txt_files)} txt files to process:")
+    for f in txt_files:
+        print(f"  - {f}")
+
+    # Create H5 file
+    basename = os.path.basename(folder_path)
+    h5_path = os.path.join(output_folder_path, f"{basename}_velocity_data.h5")
+    meta_json_path = os.path.join(output_folder_path, f"{basename}_velocity_data.json")
+
+    # Save data to H5 file
+    with h5py.File(h5_path, 'w') as f:
+        group_to_folder_map = {}
+        group_counter = 0
+
+        for txt_file in txt_files:
+            print(f"\nProcessing file: {txt_file}")
+
+            # Parse filename to get design point and velocity
+            design_point, velocity = parse_filename(txt_file)
+            print(f"  Design Point: {design_point}, Velocity: {velocity}")
+
+            # Read the data
+            txt_file_path = os.path.join(folder_path, txt_file)
+            nodes, coordinates, velocities = read_velocity_txt_file(txt_file_path)
+
+            if not nodes:
+                print(f"  No data found in {txt_file}, skipping")
+                continue
+
+            # Convert to tensors
+            node_positions = torch.tensor(coordinates, dtype=torch.float32).to(device)
+            node_velocities = torch.tensor(velocities, dtype=torch.float32).to(device)
+
+            # Create group in H5 file
+            group_name = f"group_{group_counter}"
+            group = f.create_group(group_name)
+
+            # Save position data
+            group.create_dataset("positions", data=node_positions.cpu().numpy())
+
+            # Save velocity data
+            group.create_dataset("velocities", data=node_velocities.cpu().numpy())
+
+            # Save node IDs
+            group.create_dataset("node_ids", data=nodes)
+
+            # Store metadata
+            group_to_folder_map[group_name] = {
+                'design_point': design_point,
+                'velocity': velocity,
+                'num_nodes': len(nodes),
+                'filename': txt_file,
+                'data_shape': {
+                    'positions': list(node_positions.shape),
+                    'velocities': list(node_velocities.shape)
+                }
+            }
+
+            print(f"  Saved as {group_name} with {len(nodes)} nodes")
+            group_counter += 1
+
+    # Save metadata to JSON
+    with open(meta_json_path, 'w') as json_file:
+        json.dump(group_to_folder_map, json_file, indent=4)
+
+    print(f"\nH5 file saved to: {h5_path}")
+    print(f"Metadata saved to: {meta_json_path}")
+    print(f"Total groups saved: {group_counter}")
+
+def verify_h5_file(h5_path: str, meta_json_path: str):
+    """
+    Verify the created H5 file and print summary
+    """
+    print("\n" + "="*50)
+    print("VERIFICATION SUMMARY")
+    print("="*50)
+    
+    # Read metadata
+    with open(meta_json_path, 'r') as f:
+        metadata = json.load(f)
+    
+    # Check H5 file
+    with h5py.File(h5_path, 'r') as f:
+        print(f"H5 file: {h5_path}")
+        print(f"Number of groups: {len(f.keys())}")
+        
+        for group_name in f.keys():
+            group = f[group_name]
+            meta = metadata[group_name]
+            
+            print(f"\nGroup: {group_name}")
+            print(f"  File: {meta['filename']}")
+            print(f"  Design Point: {meta['design_point']}")
+            print(f"  Velocity: {meta['velocity']}")
+            print(f"  Nodes: {meta['num_nodes']}")
+            print(f"  Position shape: {group['positions'].shape}")
+            print(f"  Velocity shape: {group['velocities'].shape}")
+
+def main():
+    """
+    Main function to run the velocity data extraction
+    """
+    # Update these paths to your actual folders
+    folder_path = r"D:\ANK_official\Dataset_generated\final_data"
+    output_folder_path = r"D:\ANK_official\Dataset_generated\extracted_data"
+
+    print("Starting velocity data extraction...")
+    print(f"Input folder: {folder_path}")
+    print(f"Output folder: {output_folder_path}")
+
+    save_velocity_data_to_h5(folder_path, output_folder_path)
+    
+    # Verify the results
+    basename = os.path.basename(folder_path)
+    h5_path = os.path.join(output_folder_path, f"{basename}_velocity_data.h5")
+    meta_json_path = os.path.join(output_folder_path, f"{basename}_velocity_data.json")
+    
+    if os.path.exists(h5_path) and os.path.exists(meta_json_path):
+        verify_h5_file(h5_path, meta_json_path)
+
+if __name__ == '__main__':
+    main()
