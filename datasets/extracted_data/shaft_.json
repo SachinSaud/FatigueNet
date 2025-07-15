@@ -1,0 +1,121 @@
+{
+    "group_0": {
+        "geometry_folder": "life_D15_d5_r1",
+        "number_of_nodes": 930,
+        "number_of_cells": 1495,
+        "number_of_fatigue_life": 930,
+        "data_type": "fatigue_life"
+    },
+    "group_1": {
+        "geometry_folder": "life_D15_d5_r2",
+        "number_of_nodes": 881,
+        "number_of_cells": 1384,
+        "number_of_fatigue_life": 881,
+        "data_type": "fatigue_life"
+    },
+    "group_2": {
+        "geometry_folder": "life_D15_d5_r3",
+        "number_of_nodes": 919,
+        "number_of_cells": 1473,
+        "number_of_fatigue_life": 919,
+        "data_type": "fatigue_life"
+    },
+    "group_3": {
+        "geometry_folder": "life_D20_d10_r1",
+        "number_of_nodes": 1597,
+        "number_of_cells": 2696,
+        "number_of_fatigue_life": 1597,
+        "data_type": "fatigue_life"
+    },
+    "group_4": {
+        "geometry_folder": "life_D20_d10_r3",
+        "number_of_nodes": 1598,
+        "number_of_cells": 2712,
+        "number_of_fatigue_life": 1598,
+        "data_type": "fatigue_life"
+    },
+    "group_5": {
+        "geometry_folder": "life_D20_d5_r1",
+        "number_of_nodes": 1196,
+        "number_of_cells": 1976,
+        "number_of_fatigue_life": 1196,
+        "data_type": "fatigue_life"
+    },
+    "group_6": {
+        "geometry_folder": "life_D20_d5_r2",
+        "number_of_nodes": 1186,
+        "number_of_cells": 1967,
+        "number_of_fatigue_life": 1556,
+        "data_type": "fatigue_life"
+    },
+    "group_7": {
+        "geometry_folder": "life_D20_d5_r3",
+        "number_of_nodes": 1212,
+        "number_of_cells": 2027,
+        "number_of_fatigue_life": 1212,
+        "data_type": "fatigue_life"
+    },
+    "group_8": {
+        "geometry_folder": "life_D25_d10_r1",
+        "number_of_nodes": 1813,
+        "number_of_cells": 3075,
+        "number_of_fatigue_life": 1813,
+        "data_type": "fatigue_life"
+    },
+    "group_9": {
+        "geometry_folder": "life_D25_d10_r2",
+        "number_of_nodes": 1791,
+        "number_of_cells": 3041,
+        "number_of_fatigue_life": 1791,
+        "data_type": "fatigue_life"
+    },
+    "group_10": {
+        "geometry_folder": "life_D25_d10_r3",
+        "number_of_nodes": 1818,
+        "number_of_cells": 3104,
+        "number_of_fatigue_life": 1818,
+        "data_type": "fatigue_life"
+    },
+    "group_11": {
+        "geometry_folder": "life_D25_d15_r1",
+        "number_of_nodes": 2272,
+        "number_of_cells": 3920,
+        "number_of_fatigue_life": 2272,
+        "data_type": "fatigue_life"
+    },
+    "group_12": {
+        "geometry_folder": "life_D25_d15_r2",
+        "number_of_nodes": 2228,
+        "number_of_cells": 3871,
+        "number_of_fatigue_life": 2228,
+        "data_type": "fatigue_life"
+    },
+    "group_13": {
+        "geometry_folder": "life_D25_d15_r3",
+        "number_of_nodes": 2288,
+        "number_of_cells": 4002,
+        "number_of_fatigue_life": 2288,
+        "data_type": "fatigue_life"
+    },
+    "group_14": {
+        "geometry_folder": "life_D30_d20_r1",
+        "number_of_nodes": 2997,
+        "number_of_cells": 5308,
+        "number_of_fatigue_life": 2997,
+        "data_type": "fatigue_life"
+    },
+    "group_15": {
+        "geometry_folder": "life_D30_d20_r2",
+        "number_of_nodes": 2903,
+        "number_of_cells": 5102,
+        "number_of_fatigue_life": 2903,
+        "data_type": "fatigue_life"
+    },
+    "group_16": {
+        "geometry_folder": "life_D30_d20_r3",
+        "number_of_nodes": 2983,
+        "number_of_cells": 5297,
+        "number_of_fatigue_life": 2983,
+        "data_type": "fatigue_life"
+    }
+}
